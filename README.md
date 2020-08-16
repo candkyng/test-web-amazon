@@ -1,2 +1,2 @@
 # test-web-amazon
-Web automation - Selenium webdriver and Python
+Web automation testing using Selenium webdriver and Python
