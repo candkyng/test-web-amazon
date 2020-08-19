@@ -1,4 +1,5 @@
 import unittest
+import HtmlTestRunner
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
@@ -30,5 +31,5 @@ class AMZNTestCase(unittest.TestCase):
     def tearDown(self):
         self.driver.close()
 
-if __name__=="__main__":
-    unittest.main()
+if __name__=="__main__":      
+    unittest.main(testRunner=HtmlTestRunner.HTMLTestRunner(output='reports',report_title="Test Results"))
