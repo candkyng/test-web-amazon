@@ -1,6 +1,9 @@
 import unittest
 import HtmlTestRunner
 import time
+from resources.TestData import TestData
+from resources.Locators import Locators
+from pageObjects.Pages import HomePage,SearchResultsPage,ProductDetailsPage,SubCartPage,CartPage
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
@@ -15,54 +18,52 @@ class AMZNTestCase(unittest.TestCase):
     
     def test_TC001_load_website(self):
         """Ensure Amazon home page is loaded"""
-        self.driver.get(self.url_home)
-        self.assertIn("Amazon",self.driver.title,msg="Page title does not contain 'Amazon'")
-
+        self.homepage = HomePage(self.driver)
+        self.assertIn(TestData.HOME_PAGE_TITLE,self.homepage.driver.title,msg="Page title does not contain 'Amazon'")
+    
     def test_TC002_search(self):
         """Ensure user can perform a search"""
-        driver=self.driver
-        driver.get(self.url_home)
-        search_term="Selenium with Python"
-        search_input_box=driver.find_element_by_id("twotabsearchtextbox")
-        search_input_box.send_keys(search_term + Keys.RETURN)
-
-        self.assertIn(f"Amazon.ca : {search_term}",driver.title,"Page not load properly.")
-        self.assertNotIn(f"No results for {search_term}",driver.page_source,"No Search result.")
-
+        self.homepage = HomePage(self.driver)       
+        self.homepage.search()
+        title = TestData.HOME_PAGE_TITLE + " : " + TestData.SEARCH_TERM
+        
+        self.assertIn(title,self.homepage.driver.title,"Page not load properly.")
+        self.assertNotIn(TestData.NO_RESULTS_TEXT, self.homepage.driver.page_source ,"No Search result.")
+    
     def test_TC003_add_to_cart(self):
         """Ensure user can add the first item to cart"""
-        driver=self.driver
-        driver.get(self.url_home)
-        search_term="Selenium with Python"
-        search_input_box=driver.find_element_by_id("twotabsearchtextbox")
-        search_input_box.send_keys(search_term + Keys.RETURN)
-        driver.find_element_by_xpath("(//div[@class='sg-col-inner']//img[contains(@data-image-latency,'s-product-image')])[2]").click()
-        driver.find_element_by_id("add-to-cart-button").click()
-        cartCount = int(self.driver.find_element_by_id('nav-cart-count').text)
-        self.assertEqual(cartCount,1)
-        self.assertTrue(self.driver.find_element_by_id("hlb-subcart").is_enabled())
-        self.assertTrue(self.driver.find_element_by_id("hlb-ptc-btn-native").is_displayed())
-    
+        self.homepage = HomePage(self.driver)       
+        self.homepage.search()
+        self.search_result_page = SearchResultsPage(self.homepage.driver)
+        self.search_result_page.click_search_result()
+        self.product_detail_page = ProductDetailsPage(self.search_result_page.driver)
+        self.product_detail_page.click_add_to_cart_button()
+        self.sub_cart_page = SubCartPage(self.product_detail_page.driver)
+        
+        self.assertEqual(self.sub_cart_page.cartCount,1)        
+        self.assertTrue(self.sub_cart_page.is_visible(Locators.SUB_CART_DIV))
+        self.assertTrue(self.sub_cart_page.is_enabled(Locators.PROCEED_TO_BUY_BUTTON))
+        
+  
     def test_TC004_delete_item_in_cart(self):
         """Ensure user delete item from cart"""
-        driver=self.driver
-        driver.get(self.url_home)
-        search_term="Selenium with Python"
-        search_input_box=driver.find_element_by_id("twotabsearchtextbox")
-        search_input_box.send_keys(search_term + Keys.RETURN)
-        driver.find_element_by_xpath("(//div[@class='sg-col-inner']//img[contains(@data-image-latency,'s-product-image')])[2]").click()
-        driver.find_element_by_id("add-to-cart-button").click()
-       
-        cartCount = int(self.driver.find_element_by_id('nav-cart-count').text)
-        self.assertEqual(cartCount,1)
-        driver.find_element_by_id("hlb-view-cart-announce").click()
-        self.driver.find_element_by_xpath("//div[contains(@class,'a-row sc-action-links')]//input[contains(@data-action,'delete')]").click()
-        time.sleep(2)
+        self.homepage = HomePage(self.driver)       
+        self.homepage.search()
+        self.search_result_page = SearchResultsPage(self.homepage.driver)
+        self.search_result_page.click_search_result()
+        self.product_detail_page = ProductDetailsPage(self.search_result_page.driver)
+        self.product_detail_page.click_add_to_cart_button()
+        self.sub_cart_page = SubCartPage(self.product_detail_page.driver)
+        self.sub_cart_page.click_cart_button()
+        self.cart_page = CartPage(self.sub_cart_page.driver)
+        self.cart_page.delete_item()        
+        
         # Ensure the cart is empty when the deleted item was the last item
-        self.assertIn("Your Amazon Cart is empty",driver.page_source)
-
+        self.assertIn(TestData.EMPTY_CART_TEXT,self.cart_page.driver.page_source)
+   
     def tearDown(self):
         self.driver.close()
+        self.driver.quit()
 
 if __name__=="__main__":      
     unittest.main(testRunner=HtmlTestRunner.HTMLTestRunner(output='reports',report_title="Test Results"))
