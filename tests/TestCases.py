@@ -12,9 +12,10 @@ class AMZNTestCase(unittest.TestCase):
     url_home = "http://www.amazon.ca"
 
     def setUp(self):
-        self.driver = webdriver.Chrome() # chromedriver.exe location should be in PATH environment variable
-        self.driver.maximize_window()
-        self.driver.implicitly_wait(10)
+        chrome_options=webdriver.ChromeOptions()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--disable-gpu")
+        self.driver = webdriver.Chrome(options=chrome_options) # chromedriver.exe location should be in PATH environment variable
     
     def test_TC001_load_website(self):
         """Ensure Amazon home page is loaded"""
